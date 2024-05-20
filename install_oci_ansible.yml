@@ -1,0 +1,72 @@
+---
+# ------------------------------------------------------------------------------
+# Install Oracle Cloud Infrastructure Guide
+# =========================================
+#
+# Ref: https://docs.ansible.com/ansible/latest/scenario_guides/guide_oracle.html
+# ------------------------------------------------------------------------------
+
+- hosts:                localhost
+  vars:
+    git_top_repos_dir:  "/home/douglas/git-repositories"
+    git_local_repos_dir:
+                        "{{ git_top_repos_dir }}/oci-ansible-collection"
+    install_pgm:        "{{ git_local_repos_dir }}/scripts/install.py"
+  tasks:
+
+# ------------------------------------------------------------------------------
+# Install the Oracle Cloud Infrastructure Python SDK
+# ------------------------------------------------------------------------------
+
+  - name:               'Install the Oracle Cloud Infrastructure Python SDK'
+    ansible.builtin.pip:
+      name:             oci
+      state:            present
+
+# ------------------------------------------------------------------------------
+# Install the Ansible OCI Modules from Galaxy fails with:
+#   [WARNING]: - oracle.oci_ansible_modules was NOT installed successfully: -
+#   sorry, oracle.oci_ansible_modules was not found on
+#   https://galaxy.ansible.com/api/.
+#
+# Need to use GIT Clone instead
+#   Repo is deprecated:
+#     "https://github.com/oracle/oci-ansible-modules.git"
+# ------------------------------------------------------------------------------
+
+  - name:               'Validates directories'
+    ansible.builtin.assert:
+      msg:              'Directories are missing'
+      that:             git_top_repos_dir is directory
+
+  - name:               'Clone the Ansible OCI Modules from GIT'
+    ansible.builtin.git:
+      clone:            true
+      dest:             "{{ git_local_repos_dir }}"
+      repo:             "git@github.com:oracle/oci-ansible-collection.git"
+      version:          "v5.0.0"
+    register:           git_clone
+
+  - name:               'Display output from GIT Clone'
+    ansible.builtin.debug:
+      var:              git_clone.stdout_lines
+    when:
+      -                 git_clone is defined
+      -                 git_clone.stdout_lines is defined
+
+  - name:               'Install the Ansible OCI Modules as ROOT'
+    ansible.builtin.script:
+      chdir:            "{{ git_local_repos_dir }}"
+      cmd:              "/usr/bin/python3 {{ install_pgm }}"
+    register:           install_oci
+    become:             yes
+    become_user:        root
+    when:               install_pgm is exists
+  
+  - name:               'Display output from Ansible OCI Module installation'
+    ansible.builtin.debug:
+      var:              install_oci.stdout_lines
+    when:
+      -                 install_oci is defined
+      -                 install_oci.stdout_lines is defined
+...
