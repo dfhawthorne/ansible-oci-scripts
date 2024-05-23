@@ -1,0 +1,25 @@
+---
+- hosts: localhost
+  tasks:
+  - name:               "List availability_domains"
+    oracle.oci.oci_identity_availability_domain_facts:
+      config_file_location:
+                        "/home/douglas/.oci/ansible_config"
+      compartment_id:   "ocid1.tenancy.oc1..aaaaaaaa7ilqdzmkbqduujc3tt6zrl2n2ytcughcjoidozg4memj2k4cm7na"
+    register:           ad
+
+  - ansible.builtin.debug:
+      var: ad
+    when: ad is defined
+  
+  - name:               "get VCN data"
+    oracle.oci.oci_network_vcn_facts:
+      config_file_location:
+                        "/home/douglas/.oci/ansible_config"
+      compartment_id:   "ocid1.compartment.oc1..aaaaaaaax4nkky4yov3bahtf3cg226ya2ngsaru7vxkv6pavdjwzz5udsojq"
+    register:           vcn
+  
+  - ansible.builtin.debug:
+      var:              vcn
+    when:               vcn is defined
+...
