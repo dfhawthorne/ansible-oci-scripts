@@ -1,25 +1,31 @@
 ---
 - hosts: localhost
   tasks:
-  - name:               "List availability_domains"
-    oracle.oci.oci_identity_availability_domain_facts:
-      config_file_location:
-                        "/home/douglas/.oci/ansible_config"
-      compartment_id:   "ocid1.tenancy.oc1..aaaaaaaa7ilqdzmkbqduujc3tt6zrl2n2ytcughcjoidozg4memj2k4cm7na"
-    register:           ad
-
-  - ansible.builtin.debug:
-      var: ad
-    when: ad is defined
-  
-  - name:               "get VCN data"
+  - name:               "Get VCN data for Mastadon example"
     oracle.oci.oci_network_vcn_facts:
-      config_file_location:
-                        "/home/douglas/.oci/ansible_config"
       compartment_id:   "ocid1.compartment.oc1..aaaaaaaax4nkky4yov3bahtf3cg226ya2ngsaru7vxkv6pavdjwzz5udsojq"
     register:           vcn
   
-  - ansible.builtin.debug:
-      var:              vcn
-    when:               vcn is defined
+  - name:               "Display Virtual Cloud Networks"
+    ansible.builtin.debug:
+      var:              vcn.vcns
+    when:
+      -                 vcn is defined
+      -                 vcn.vcns is defined
+  
+  - name:               "Fetches details about one or multiple Subnet resources in Mastadon example"
+    oracle.oci.oci_network_subnet_facts:
+      compartment_id:   "{{ vcn.vcns[0].compartment_id }}"
+      vcn_id:           "{{ vcn.vcns[0].id }}"
+    register:           subnet
+    when:
+      -                 vcn is defined
+      -                 vcn.vcns is defined
+  
+  - name:               "Display SubNets"
+    ansible.builtin.debug:
+      var:              subnet.subnets
+    when:
+      -                 subnet is defined
+      -                 subnet.subnets is defined
 ...
