@@ -1,23 +1,11 @@
 ---
 # ------------------------------------------------------------------------------
-# Demonstrate mastery in applying EndPoints to a Networking Architecture
-# ======================================================================
+# Examine VCN/Subnets Characteristics
+# ===================================
 #
-# Uses two (2) compartments:
+# Finds all VCNs and Subnets in the following two (2) compartments:
 # 1. mastadon_compartment
 # 2. Sandbox
-#
-# The following gateways are:
-# 1. Internet Gateway from mastadon_compartment
-# 2. NAT Gateway from mastadon_compartment
-# 3. DRG from mastadon_compartment
-# 4. LPG between mastadon_compartment and Sandbox
-# 5. Services gateway from mastadon_compartment
-#
-# The following compute instances are created:
-# 1. public01 in mastadon_compartment
-# 2. private01 in mastadon_compartment
-# 3. private02 in Sandbox
 # ------------------------------------------------------------------------------
 
 - hosts: localhost
