@@ -1,31 +1,82 @@
 ---
+# ------------------------------------------------------------------------------
+# Demonstrate mastery in applying EndPoints to a Networking Architecture
+# ======================================================================
+#
+# Uses two (2) compartments:
+# 1. mastadon_compartment
+# 2. Sandbox
+#
+# The following gateways are:
+# 1. Internet Gateway from mastadon_compartment
+# 2. NAT Gateway from mastadon_compartment
+# 3. DRG from mastadon_compartment
+# 4. LPG between mastadon_compartment and Sandbox
+# 5. Services gateway from mastadon_compartment
+#
+# The following compute instances are created:
+# 1. public01 in mastadon_compartment
+# 2. private01 in mastadon_compartment
+# 3. private02 in Sandbox
+# ------------------------------------------------------------------------------
+
 - hosts: localhost
+  vars:
+    OCI_CLI_TENANCY:    "ocid1.tenancy.oc1..aaaaaaaa7ilqdzmkbqduujc3tt6zrl2n2ytcughcjoidozg4memj2k4cm7na"
   tasks:
-  - name:               "Get VCN data for Mastadon example"
+  - name:               "Get Required Compartment Facts"
+    oracle.oci.oci_identity_compartment_facts:
+      parent_compartment_id:
+                        "{{ OCI_CLI_TENANCY }}"
+      name:             "{{ item }}"
+    register:           required_compartment
+    loop:
+      -                 "mastadon_compartment"
+      -                 "Sandbox"
+  
+  - name:               "Display Required Compartment Facts"
+    ansible.builtin.debug:
+      var:              required_compartment
+    when:
+      -                 required_compartment is defined
+  
+  - name:               "Save Compartment IDs for Required Compartments"
+    ansible.builtin.set_fact:
+      mastadon_comp_id: "{{ required_compartment.results[0].compartments[0].id }}"
+      sandbox_comp_id:  "{{ required_compartment.results[1].compartments[0].id }}"
+
+  - name:               "Get VCN data"
     oracle.oci.oci_network_vcn_facts:
-      compartment_id:   "ocid1.compartment.oc1..aaaaaaaax4nkky4yov3bahtf3cg226ya2ngsaru7vxkv6pavdjwzz5udsojq"
+      compartment_id:   "{{ item }}"
     register:           vcn
+    loop:
+      -                 "{{ mastadon_comp_id }}"
+      -                 "{{ sandbox_comp_id }}"
   
-  - name:               "Display Virtual Cloud Networks"
+  - name:               "Display VCN Data"
     ansible.builtin.debug:
-      var:              vcn.vcns
+      var:              vcn
     when:
       -                 vcn is defined
-      -                 vcn.vcns is defined
   
-  - name:               "Fetches details about one or multiple Subnet resources in Mastadon example"
+  - name:               "Save VCN IDs for Required Compartments"
+    ansible.builtin.set_fact:
+      req_vcn_ids:
+        - comp_id:      "{{ mastadon_comp_id }}"
+          vcn_id:       "{{ vcn.results[0].vcns[0].id }}"
+        - comp_id:      "{{ sandbox_comp_id }}"
+          vcn_id:       "{{ vcn.results[1].vcns[0].id }}"
+
+  - name:               "Get Subnet data"
     oracle.oci.oci_network_subnet_facts:
-      compartment_id:   "{{ vcn.vcns[0].compartment_id }}"
-      vcn_id:           "{{ vcn.vcns[0].id }}"
+      compartment_id:   "{{ item.comp_id }}"
+      vcn_id:           "{{ item.vcn_id }}"
     register:           subnet
-    when:
-      -                 vcn is defined
-      -                 vcn.vcns is defined
+    loop:               "{{ req_vcn_ids }}"
   
-  - name:               "Display SubNets"
+  - name:               "Display Subnet Data"
     ansible.builtin.debug:
-      var:              subnet.subnets
+      var:              subnet
     when:
       -                 subnet is defined
-      -                 subnet.subnets is defined
 ...
