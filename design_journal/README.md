@@ -10,3 +10,4 @@ Table of Contents
 -----------------
 
 * [2024-05-21](2024_05_21.md) Installed OCI Ansible Module
+* [2024-06-09](2024_06_09.md) OCI 2024 Certified Network Professional Scripts Moved
